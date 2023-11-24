@@ -21,3 +21,11 @@ export interface ResourceRecord {
   data: string;
   length: number;
 }
+
+export interface Message {
+  header: Header;
+  questions: Question[];
+  answerRecords: ResourceRecord[];
+  authorityRecords: ResourceRecord[];
+  additionalRecords: ResourceRecord[];
+}

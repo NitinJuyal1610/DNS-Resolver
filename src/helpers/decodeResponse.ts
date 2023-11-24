@@ -1,11 +1,14 @@
-import { Header, Question, ResourceRecord } from '../types/dns.js';
+import { Header, Question, ResourceRecord, Message } from '../types/dns.js';
 import { decodeDomainName } from './decodeDomainName.js';
 import { decodeRR } from './decordeRR.js';
 
-export const decodeResponse = (response: string) => {
+export const decodeResponse = (response: string): Message => {
   const headerBytes = response.slice(0, 24);
   const questions: Question[] = [];
   const resourceRecords: ResourceRecord[] = [];
+  let answerRecords: ResourceRecord[] = [];
+  let authorityRecords: ResourceRecord[] = [];
+  let additionalRecords: ResourceRecord[] = [];
   let nextIndex = 24;
 
   //decoded the header
@@ -37,5 +40,27 @@ export const decodeResponse = (response: string) => {
   if (isResponse) {
     //get the answers , authority records, additional records
     decodeRR(nextIndex, response, resourceRecords);
+
+    //slice the resource records
+    let currPartition = 0;
+    answerRecords = resourceRecords.slice(currPartition, header.numAnswers);
+    currPartition += header.numAnswers;
+    authorityRecords = resourceRecords.slice(
+      currPartition,
+      currPartition + header.numAuthorityRecords,
+    );
+    currPartition += header.numAuthorityRecords;
+    additionalRecords = resourceRecords.slice(
+      currPartition,
+      currPartition + header.numAdditionalRecords,
+    );
   }
+
+  return {
+    header,
+    questions,
+    answerRecords,
+    authorityRecords,
+    additionalRecords,
+  };
 };

@@ -15,9 +15,10 @@ export const decodeDomainName = (
     //increment the index
     index += 2;
     if (byte === '00') {
+      //is a zero
+      resultName = resultName.slice(0, -1);
       break;
     }
-
     if (label & 0xc0) {
       // is a pointer
       //fetch from the offset and return

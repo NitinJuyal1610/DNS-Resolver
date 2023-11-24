@@ -48,9 +48,13 @@ export const decodeRR = (
     const rdLength = response.slice(index, index + 4);
     index += 4;
 
-    const data = hexToIp(
-      response.slice(index, index + parseInt(rdLength, 16) * 2),
-    );
+    const rData = response.slice(index, index + parseInt(rdLength, 16) * 2);
+    let data = rData;
+    if (recordType === '0001' && recordClass === '0001') {
+      data = hexToIp(rData);
+    } else if (recordType === '0002') {
+      data = decodeDomainName(index, response).name;
+    }
 
     index += parseInt(rdLength, 16) * 2;
 

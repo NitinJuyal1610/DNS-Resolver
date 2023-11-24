@@ -3,6 +3,8 @@ import { decodeResponse } from './helpers/decodeResponse.js';
 import { Header, Question } from './types/dns.js';
 import dgram from 'dgram';
 
+//build input
+
 const header: Header = {
   id: 22,
   flags: parseInt('0100', 16),
@@ -18,8 +20,9 @@ const question: Question = {
   recordClass: 1,
 };
 
-const message = buildDnsMessage(header, question);
+const message = buildDnsMessage(header, [question]);
 
+// udp socket
 const socket = dgram.createSocket('udp4');
 
 const PORT = 53;
@@ -33,7 +36,7 @@ socket.send(Buffer.from(message, 'hex'), PORT, HOST, (err) => {
 // listen for a response from the server
 socket.on('message', (msg, rinfo) => {
   const response = Buffer.from(msg).toString('hex');
-  decodeResponse(message.length, response);
+  decodeResponse(response);
 });
 
 socket.on('error', (err) => {

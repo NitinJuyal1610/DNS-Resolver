@@ -12,3 +12,12 @@ export interface Question {
   recordType: number;
   recordClass: number;
 }
+
+export interface ResourceRecord {
+  name: string;
+  recordType: number;
+  recordClass: number;
+  ttl: number;
+  data: string;
+  length: number;
+}

@@ -1,16 +1,10 @@
 import { Header, Question } from '../types/dns.js';
+import { encodeDomainName } from './encodeDomainName.js';
 
-const encodeQname = (name: string): string => {
-  let encodedName = '';
-  for (const label of name.split('.')) {
-    encodedName += label.length.toString(16).padStart(2, '0');
-    encodedName += Buffer.from(label).toString('hex');
-  }
-  encodedName += '00';
-  return encodedName;
-};
-
-export const buildDnsMessage = (header: Header, question: Question): string => {
+export const buildDnsMessage = (
+  header: Header,
+  questions: Question[],
+): string => {
   let message = '';
 
   //attach header
@@ -19,9 +13,11 @@ export const buildDnsMessage = (header: Header, question: Question): string => {
   }
 
   //attach question
-  message += encodeQname(question.name);
-  message += question.recordClass.toString(16).padStart(4, '0');
-  message += question.recordType.toString(16).padStart(4, '0');
+  questions.map((question) => {
+    message += encodeDomainName(question.name);
+    message += question.recordClass.toString(16).padStart(4, '0');
+    message += question.recordType.toString(16).padStart(4, '0');
+  });
 
   return message;
 };

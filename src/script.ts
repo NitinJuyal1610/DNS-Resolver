@@ -10,50 +10,63 @@ const socket = dgram.createSocket('udp4');
 //root name server
 const HOST = '198.41.0.4';
 
-const main = () => {
-  //build input
+// message input
 
-  dnsCall(HOST);
+const header: Header = {
+  id: 22,
+  flags: 0,
+  numQuestions: 1,
+  numAnswers: 0,
+  numAuthorityRecords: 0,
+  numAdditionalRecords: 0,
 };
 
-export const dnsCall = (host: string) => {
+const question: Question = {
+  name: '',
+  recordType: 1,
+  recordClass: 1,
+};
+
+const main = async () => {
+  //build input
+  const domainInput = process.argv[2];
+  question.name = domainInput;
+
+  if (!question.name) {
+    console.log('Please enter a domain name!');
+    return;
+  }
+  try {
+    const response = await dnsCall(HOST);
+    const resultIp = await dnsResolver(response);
+    console.log(`🎊${question.name} resolves to ${resultIp}🎊`);
+
+    socket.close();
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const dnsCall = (host: string): Promise<string> => {
   const PORT = 53;
 
-  const header: Header = {
-    id: 22,
-    flags: 0,
-    numQuestions: 1,
-    numAnswers: 0,
-    numAuthorityRecords: 0,
-    numAdditionalRecords: 0,
-  };
-
-  const question: Question = {
-    name: 'dns.google.com',
-    recordType: 1,
-    recordClass: 1,
-  };
-
   const message = buildDnsMessage(header, [question]);
-  socket.send(Buffer.from(message, 'hex'), PORT, HOST, (err) => {
-    if (err) throw err;
+
+  console.log(`Querying ${host} for ${question.name}`);
+
+  return new Promise((resolve, reject) => {
+    socket.send(Buffer.from(message, 'hex'), PORT, host, (err) => {
+      if (err) {
+        reject(err);
+      }
+    });
+
+    // listen for a response from the server
+    socket.on('message', async (msg, rinfo) => {
+      const response = Buffer.from(msg).toString('hex');
+      resolve(response);
+    });
   });
 };
-
-// listen for a response from the server
-socket.on('message', (msg, rinfo) => {
-  const response = Buffer.from(msg).toString('hex');
-  dnsResolver(response);
-});
-
-socket.on('error', (err) => {
-  console.error(err);
-  socket.close();
-});
-
-socket.on('listening', () => {
-  const address = socket.address();
-  console.log(`Server listening ${address.address}:${address.port}`);
-});
 
 main();

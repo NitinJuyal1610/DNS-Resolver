@@ -2,19 +2,38 @@ import { decodeResponse } from './helpers/decodeResponse.js';
 import { Message } from './types/dns.js';
 import { dnsCall } from './script.js';
 
-const checkSolution = (message: Message) => {
-  const { answerRecords, authorityRecords, additionalRecords } = message;
+const checkSolution = (responseMessage: Message) => {
+  const { answerRecords } = responseMessage;
   if (answerRecords.length > 0) {
     return answerRecords[0].data;
   }
-
-  if (!(authorityRecords.length > 0 && additionalRecords.length > 0)) {
-    throw new Error('No record found!');
-  }
-
   return null;
 };
-export const dnsResolver = (response: string) => {
-  const message = decodeResponse(response);
-  const result = checkSolution(message);
+
+const findValidServer = (responseMessage: Message) => {
+  const { additionalRecords } = responseMessage;
+
+  for (const record of additionalRecords) {
+    if (record.recordType === 1) {
+      return record.data;
+    }
+  }
+  return null;
+};
+export const dnsResolver = async (response: string) => {
+  // decode response
+  const decodedResponse = decodeResponse(response);
+
+  // check for answer record
+  if (checkSolution(decodedResponse)) {
+    return checkSolution(decodedResponse);
+  }
+
+  // find next valid server
+  if (findValidServer(decodedResponse)) {
+    const newResponse = await dnsCall(findValidServer(decodedResponse));
+    return dnsResolver(newResponse);
+  }
+
+  throw new Error('Domain not found !');
 };

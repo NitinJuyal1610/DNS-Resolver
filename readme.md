@@ -14,6 +14,8 @@ DNS Resolver built form scratch that resolves domain names to IP addresses.
 
    ```shell
    npm run dev <domain_name>
+   ```
 
 ## Output
-![DNS Resolver](asset.png)
+
+![DNS Resolver](assets/resolver.png)
